@@ -1,0 +1,47 @@
+name: News Notifier
+
+on:
+  schedule:
+    # Runs every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
+
+jobs:
+  monitor-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Restore ChromaDB cache
+        id: cache-chromadb
+        uses: actions/cache/restore@v4
+        with:
+          path: data/chromadb
+          key: chromadb-${{ github.run_id }}
+          restore-keys: |
+            chromadb-
+
+      - name: Run news notifier
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python main.py
+
+      - name: Save ChromaDB cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data/chromadb
+          key: chromadb-${{ github.run_id }}

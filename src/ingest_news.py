@@ -45,3 +45,21 @@ def parse_feed(rss_feeds):
             feed_list.append(entry_dict)
 
     return feed_list
+
+def filter_old_news(feed_list):
+    """Filters out any news that is over one week old.
+
+    Args:
+        feed_list (list): A list of dictionaries containing article title, link, id, publication date/time, and source
+    
+    Returns:
+        filterd_feed_list (list): A filtered list of dictionaries containing article title, link, id, publication date/time, and source
+    """
+    filtered_feed_list = list()
+    current_time = time.time()
+
+    for feed in feed_list:
+        if feed["published_at"] >= current_time - (7 * 24 * 60 * 60):
+            filtered_feed_list.append(feed)
+    
+    return filtered_feed_list

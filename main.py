@@ -1,5 +1,5 @@
 # imports
-from src.ingest_news import get_feeds, parse_feed
+from src.ingest_news import get_feeds, parse_feed, filter_old_news
 from src.embeddings import embed_article_headline
 from src.vector_database import init_db, is_new_article, store_article, return_similar_articles
 from src.classifier import classify_article
@@ -14,12 +14,13 @@ def main():
     print("Retrieving RSS feeds")
     RSS_feeds = get_feeds(RSS_urls)
     feed_list = parse_feed(RSS_feeds)
+    filtered_feed_list = filter_old_news(feed_list)
 
     collection = init_db(path="data/chromadb")
 
     print("Finding new articles")
     new_articles = list()
-    for article in feed_list:
+    for article in filtered_feed_list:
         if is_new_article(collection=collection, article_id=article["id"]):
             new_articles.append(article)
     print(f'Found {len(new_articles)} new articles')
@@ -52,7 +53,7 @@ def main():
         store_article(collection=collection, article_dict=new_article_dict)
 
     all_articles = collection.get()
-    feed_ids = set(article["id"] for article in feed_list)
+    feed_ids = set(article["id"] for article in filtered_feed_list)
 
     articles_to_delete = list()
     for id in all_articles["ids"]:
